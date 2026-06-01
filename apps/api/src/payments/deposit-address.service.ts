@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import BIP32Factory from 'bip32';
+import * as bitcoin from 'bitcoinjs-lib';
+import * as tinysecp from 'tiny-secp256k1';
 import { DepositAddress, DepositNetwork } from './interfaces/deposit-address.interface';
+
+const BIP32 = BIP32Factory(tinysecp);
 
 @Injectable()
 export class DepositAddressService {
@@ -40,10 +45,20 @@ export class DepositAddressService {
       case DepositNetwork.BTC: {
         const index = this.getNextDerivationIndex(network);
         derivationPath = `m/84'/0'/0'/0/${index}`;
-        // TODO: Derive actual BTC address from xpub using bip32
-        // const key = BIP32.fromBase58(this.btcXpub).derivePath(derivationPath);
-        // address = bitcoin.payments.p2wpkh({ pubkey: key.publicKey }).address!;
-        address = `bc1q${crypto.randomUUID().split('-').join('').slice(0, 32).toLowerCase()}`;
+        try {
+          const masterNode = BIP32.fromBase58(this.btcXpub);
+          const derivedKey = masterNode.derivePath(derivationPath);
+          const { address: btcAddress } = bitcoin.payments.p2wpkh({
+            pubkey: derivedKey.publicKey,
+          });
+          if (!btcAddress) {
+            throw new Error('Failed to generate bech32 address');
+          }
+          address = btcAddress;
+        } catch (error) {
+          this.logger.error(`Failed to derive BTC address at path ${derivationPath}`, error);
+          throw error;
+        }
         break;
       }
 
