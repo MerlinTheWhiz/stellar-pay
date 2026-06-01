@@ -16,16 +16,17 @@ var StellarService = class {
   /**
    * Sends funds from the operational storage to a destination address
    */
-  async sendFunds(destinationAddress, amount) {
+  async sendFunds(destinationAddress, amount, assetCode, assetIssuer) {
     try {
       const sourceAccount = await this.server.loadAccount(this.sourceKeypair.publicKey());
+      const asset = assetCode && assetIssuer ? new StellarSdk.Asset(assetCode, assetIssuer) : StellarSdk.Asset.native();
       const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
         fee: StellarSdk.BASE_FEE,
         networkPassphrase: process.env.STELLAR_NETWORK_URL?.includes("public") ? StellarSdk.Networks.PUBLIC : StellarSdk.Networks.TESTNET
       }).addOperation(
         StellarSdk.Operation.payment({
           destination: destinationAddress,
-          asset: StellarSdk.Asset.native(),
+          asset,
           amount
         })
       ).setTimeout(30).build();
