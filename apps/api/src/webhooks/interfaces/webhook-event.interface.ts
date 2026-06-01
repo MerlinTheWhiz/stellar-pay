@@ -27,6 +27,7 @@ export interface WebhookEndpointRecord {
   url: string;
   secret: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface WebhookJobData {
