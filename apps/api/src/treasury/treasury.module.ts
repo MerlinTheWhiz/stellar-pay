@@ -7,5 +7,6 @@ import { WorkerModule } from '../modules/worker/worker.module';
   imports: [WorkerModule],
   controllers: [TreasuryController],
   providers: [TreasuryService],
+  exports: [TreasuryService],
 })
 export class TreasuryModule {}
